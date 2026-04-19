@@ -1,12 +1,12 @@
-﻿using System;
+﻿using SimProgramming.Controller.Interfaces;
 
-namespace SimProgramming.View
-{
-    /* View Passiva (modelo Curry & Grace)
-       Responsável apenas por Input/Output.
-       Não contém lógica, validação ou decisão.*/
+namespace SimProgramming.View;
 
-    public class ConsoleView : IView
+/* View Passiva (modelo Curry & Grace)
+   Responsável apenas por Input/Output.
+   Não contém lógica, validação ou decisão.*/
+
+public class ConsoleView : IView
     {
         #region Output
 
@@ -32,4 +32,3 @@ namespace SimProgramming.View
 
         #endregion
     }
-}
