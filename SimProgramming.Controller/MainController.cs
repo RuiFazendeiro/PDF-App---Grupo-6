@@ -1,5 +1,4 @@
 ﻿using SimProgramming.Controller.Interfaces;
-using SimProgramming.View;
 
 namespace SimProgramming.Controller;
 
