@@ -27,7 +27,7 @@ public class ConsoleView : IView
         public string LerInput(string prompt)
         {
             Console.Write(prompt);
-            return Console.ReadLine() ?? string.Empty;
+            return Console.ReadLine();
         }
 
         #endregion
