@@ -1,4 +1,5 @@
 ﻿
+
 namespace SimProgramming.Model;
 public class Relatorio : DocumentoBase
 {

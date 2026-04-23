@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SimProgramming.Model\SimProgramming.Model.csproj" />
+    <ProjectReference Include="..\SimProgramming.Controller\SimProgramming.Controller.csproj" />
   </ItemGroup>
 
   <ItemGroup>
