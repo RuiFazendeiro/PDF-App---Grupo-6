@@ -1,5 +1,9 @@
-﻿using SimProgramming.Controller.Interfaces;
+﻿#region Usings
+
+using SimProgramming.Controller.Interfaces;
 using SimProgramming.Model;
+
+#endregion
 
 namespace SimProgramming.Controller;
 
@@ -18,35 +22,46 @@ public class MainController
     {
         _view.LimparConsola();
         _view.ExibirMensagem("=== SimProgramming: Gerador de Documentos ===");
-
-        // 1. Captura de dados (View Passiva)
-        string nome = _view.LerInput("Nome do Formando: ");
-        string curso = _view.LerInput("Nome do Curso: ");
+        try
+        {
+            // 1. Captura de dados (View Passiva)
+            string nome = _view.LerInput("Nome do Formando: ");
+            string curso = _view.LerInput("Nome do Curso: ");
 
         // 2. Criação do Objeto de Domínio (Model da Andreia)
-        var certificado = new Certificado 
-        { 
-            Titulo = "Certificado de Formação",
-            NomeFormando = nome,
-            Curso = curso,
-            DataCriacao = DateTime.Now,
-            DataEmissao = DateTime.Now,
-            EntidadeEmissora = "SimProgramming"
-        };
+            var certificado = new Certificado
+            {
+                Titulo = "Certificado de Formação",
+                NomeFormando = nome,
+                Curso = curso,
+                DataCriacao = DateTime.Now,
+                DataEmissao = DateTime.Now,
+                EntidadeEmissora = "SimProgramming"
+            };
 
-        // 3. Validação e Orquestração
-        if (certificado.Validar())
-        {
+            // 3. Validação
+            if (!certificado.Validar())
+            {
+                _view.ExibirMensagem("Erro: Dados introduzidos não cumprem os requisitos de validação.");
+                return;
+            }
+
             _view.ExibirMensagem("\nDados validados com sucesso. A gerar PDF...");
-            
+
             // 4. Chamada ao Serviço (Trabalho do Frederico)
             _pdfService.GerarDocumento(certificado, "Certificado_Equipa6.pdf");
-            
+
             _view.ExibirMensagem("Operação concluída. Verifique o ficheiro gerado.");
         }
-        else
+        catch (ArgumentException aex)
         {
-            _view.ExibirMensagem("\nErro: Dados introduzidos não cumprem os requisitos de validação.");
+            // Parâmetros inválidos (ex: caminho)
+            _view.ExibirMensagem($"Parâmetro inválido: {aex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Erro inesperado - report amigável e não expor stacktrace na View
+            _view.ExibirMensagem($"Erro: {ex.Message}");
         }
     }
 }
