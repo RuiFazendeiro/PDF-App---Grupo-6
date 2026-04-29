@@ -2,33 +2,68 @@
 
 namespace SimProgramming.View;
 
-/* View Passiva (modelo Curry & Grace)
-   Responsável apenas por Input/Output.
-   Não contém lógica, validação ou decisão.*/
-
 public class ConsoleView : IView
+{
+    #region Output
+
+    public void ExibirMensagem(string mensagem)
     {
-        #region Output
-
-        public void ExibirMensagem(string mensagem)
-        {
-            Console.WriteLine(mensagem);
-        }
-
-        public void LimparConsola()
-        {
-            Console.Clear();
-        }
-
-        #endregion
-
-        #region Input
-
-        public string LerInput(string prompt)
-        {
-            Console.Write(prompt);
-            return Console.ReadLine();
-        }
-
-        #endregion
+        Console.WriteLine(mensagem);
     }
+
+    public void ExibirTitulo(string titulo)
+    {
+        Console.Clear();
+        Console.WriteLine("========================================");
+        Console.WriteLine($"   {titulo}");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+    }
+
+    public void MostrarSucesso(string mensagem)
+    {
+        Console.WriteLine("[SUCESSO] " + mensagem);
+    }
+
+    public void MostrarErro(string mensagem)
+    {
+        Console.WriteLine("[ERRO] " + mensagem);
+    }
+
+    public void MostrarMenu(string titulo, List<string> opcoes)
+    {
+        Console.WriteLine("========================================");
+        Console.WriteLine(titulo);
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+
+        for (int i = 0; i < opcoes.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {opcoes[i]}");
+        }
+
+        Console.WriteLine();
+        Console.Write("Escolha uma opção: ");
+    }
+
+    #endregion
+
+    #region Input
+
+    public string LerInput(string prompt)
+    {
+        Console.Write(prompt);
+        return Console.ReadLine();
+    }
+
+    #endregion
+
+    #region Core
+
+    public void LimparConsola()
+    {
+        Console.Clear();
+    }
+
+    #endregion
+}
