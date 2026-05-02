@@ -41,9 +41,14 @@ public class MainController
             };
 
             // 3. Validação
-            if (!certificado.Validar())
+            var erros = certificado.Validar();
+
+            if (erros.Any())
             {
-                _view.ExibirMensagem("Erro: Dados introduzidos não cumprem os requisitos de validação.");
+                foreach (var erro in erros)
+                {
+                    _view.ExibirMensagem($"Erro: {erro}");
+                }
                 return;
             }
 
