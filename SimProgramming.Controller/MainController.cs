@@ -2,6 +2,7 @@
 
 using SimProgramming.Controller.Interfaces;
 using SimProgramming.Model;
+using SimProgramming.Controller.Exceptions;
 
 #endregion
 
@@ -53,15 +54,28 @@ public class MainController
 
             _view.ExibirMensagem("Operação concluída. Verifique o ficheiro gerado.");
         }
+        // --- BLOCOS CATCH ATUALIZADOS AQUI ---
+        catch (DocumentValidationException dex)
+        {
+            _view.ExibirMensagem($"\n[Aviso] {dex.Message}");
+        }
+        catch (PdfGenerationException pex)
+        {
+            _view.ExibirMensagem($"\n[Falha ao Gravar] {pex.Message}");
+            
+            // 👇 Esta é a linha que vai revelar o erro de fonte do Linux!
+            if (pex.InnerException != null)
+            {
+                _view.ExibirMensagem($"[Detalhe Técnico do Linux] {pex.InnerException.Message}");
+            }
+        }
         catch (ArgumentException aex)
         {
-            // Parâmetros inválidos (ex: caminho)
-            _view.ExibirMensagem($"Parâmetro inválido: {aex.Message}");
+            _view.ExibirMensagem($"\n[Erro Interno] Parâmetro inválido: {aex.Message}");
         }
         catch (Exception ex)
         {
-            // Erro inesperado - report amigável e não expor stacktrace na View
-            _view.ExibirMensagem($"Erro: {ex.Message}");
+            _view.ExibirMensagem($"\n[Erro Crítico] {ex.Message}");
         }
     }
 }
