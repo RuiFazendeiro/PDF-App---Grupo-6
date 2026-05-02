@@ -34,8 +34,8 @@ namespace SimProgramming.Tests
             _service.GerarDocumento(cert, _tempFile);
 
             Assert.True(File.Exists(_tempFile));
-Assert.True(File.Exists(_tempFile));
-Assert.True(new FileInfo(_tempFile).Length > 0);
+            Assert.True(File.Exists(_tempFile));
+            Assert.True(new FileInfo(_tempFile).Length > 0);
         }
 
         [Fact]
