@@ -28,7 +28,7 @@ public class MainController
             string nome = _view.LerInput("Nome do Formando: ");
             string curso = _view.LerInput("Nome do Curso: ");
 
-        // 2. Criação do Objeto de Domínio (Model da Andreia)
+            // 2. Criação do Objeto de Domínio (Model da Andreia)
             var certificado = new Certificado
             {
                 Titulo = "Certificado de Formação",
