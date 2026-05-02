@@ -1,5 +1,5 @@
-﻿#region Usings
-
+﻿using System.IO;
+using System;
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
@@ -7,11 +7,6 @@ using PdfSharp.Pdf;
 using SimProgramming.Controller.Exceptions;
 using SimProgramming.Controller.Interfaces;
 using SimProgramming.Model;
-using System.Drawing;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
-
-#endregion
 
 namespace SimProgramming.Controller;
 
@@ -21,26 +16,21 @@ public class PdfService : IPdfService
 
     public void GerarDocumento(DocumentoBase documento, string caminhoArquivo)
     {
-        if (documento is null) throw new ArgumentNullException(nameof(documento));
-        if (string.IsNullOrWhiteSpace(caminhoArquivo)) throw new ArgumentException("Caminho do ficheiro inválido.", nameof(caminhoArquivo));
+        if (documento == null) throw new ArgumentNullException(nameof(documento));
+        if (string.IsNullOrWhiteSpace(caminhoArquivo)) throw new ArgumentException("Caminho inválido.", nameof(caminhoArquivo));
 
         if (!documento.Validar())
         {
             throw new DocumentValidationException("Dados do documento inválidos. Verifique os campos obrigatórios.");
         }
 
-        var dir = Path.GetDirectoryName(caminhoArquivo);
-        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-
         try
         {
             ConfigurarFontes();
 
             using var pdf = new PdfDocument();
-
             pdf.Info.Title = documento.Titulo;
-            pdf.Info.Author = "SimProgramming";
-            pdf.Info.Subject = documento.GetType().Name;
+            pdf.Info.Author = "SimProgramming - Equipa 6";
 
             if (documento is Certificado cert)
             {
@@ -59,11 +49,7 @@ public class PdfService : IPdfService
         }
         catch (IOException ex)
         {
-            throw new PdfGenerationException("Falha ao gravar o ficheiro PDF.", ex);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            throw new PdfGenerationException("Acesso negado ao caminho do ficheiro.", ex);
+            throw new PdfGenerationException("Falha ao gravar o ficheiro PDF. Pode estar aberto noutro programa.", ex);
         }
         catch (Exception ex) when (ex is not PdfGenerationException)
         {
@@ -75,94 +61,78 @@ public class PdfService : IPdfService
     {
         var pagina = pdf.AddPage();
         pagina.Size = PageSize.A4;
-
         using var gfx = XGraphics.FromPdfPage(pagina);
 
-        var largura = pagina.Width.Point;
         var azul = XColor.FromArgb(35, 75, 145);
-
         var fonteTitulo = new XFont("Arial", 24, XFontStyleEx.Bold);
-        var fonteSubtitulo = new XFont("Arial", 15, XFontStyleEx.Regular);
         var fonteNome = new XFont("Arial", 22, XFontStyleEx.Bold);
         var fonteNormal = new XFont("Arial", 12, XFontStyleEx.Regular);
 
-        gfx.DrawRectangle(new XPen(azul, 2), 40, 40, largura - 80, pagina.Height.Point - 80);
+        // Moldura
+        gfx.DrawRectangle(new XPen(azul, 2), 40, 40, pagina.Width.Point - 80, pagina.Height.Point - 80);
 
-        gfx.DrawString(cert.Titulo, fonteTitulo, new XSolidBrush(azul),
-            new XRect(60, 90, largura - 120, 40), XStringFormats.Center);
-
-        gfx.DrawString("Certifica-se que", fonteSubtitulo, XBrushes.Black,
-            new XRect(60, 180, largura - 120, 30), XStringFormats.Center);
-
-        gfx.DrawString(cert.NomeFormando, fonteNome, new XSolidBrush(azul),
-            new XRect(60, 240, largura - 120, 40), XStringFormats.Center);
-
-        gfx.DrawString($"concluiu com sucesso o curso de {cert.Curso}.", fonteSubtitulo, XBrushes.Black,
-            new XRect(70, 315, largura - 140, 40), XStringFormats.Center);
-
+        // Textos Centrais
+        gfx.DrawString(cert.Titulo, fonteTitulo, new XSolidBrush(azul), new XRect(0, 100, pagina.Width.Point, 40), XStringFormats.Center);
+        gfx.DrawString("Certifica-se que", fonteNormal, XBrushes.Black, new XRect(0, 180, pagina.Width.Point, 30), XStringFormats.Center);
+        gfx.DrawString(cert.NomeFormando, fonteNome, new XSolidBrush(azul), new XRect(0, 230, pagina.Width.Point, 40), XStringFormats.Center);
+        gfx.DrawString($"concluiu com sucesso o curso de {cert.Curso}.", fonteNormal, XBrushes.Black, new XRect(0, 300, pagina.Width.Point, 40), XStringFormats.Center);
+        
+        // Rodapé fiel ao PR do Frederico
         gfx.DrawString($"Entidade emissora: {cert.EntidadeEmissora}", fonteNormal, XBrushes.Black, 70, 630);
-        gfx.DrawString($"Data de emissão: {cert.DataEmissao:dd/MM/yyyy}", fonteNormal, XBrushes.Black, 70, 655);
-
-        gfx.DrawLine(new XPen(azul, 1), largura - 240, 700, largura - 70, 700);
-        gfx.DrawString("Assinatura", fonteNormal, XBrushes.Black, largura - 185, 720);
+        gfx.DrawString($"Data de emissão: {cert.DataEmissao:dd/MM/yyyy}", fonteNormal, XBrushes.Black, 70, 650);
+        
+        // Linha de assinatura
+        gfx.DrawLine(new XPen(azul, 1), pagina.Width.Point - 240, 700, pagina.Width.Point - 70, 700);
+        gfx.DrawString("Assinatura", fonteNormal, XBrushes.Black, pagina.Width.Point - 185, 720);
     }
 
     private static void GerarRelatorio(PdfDocument pdf, Relatorio rel)
     {
         var pagina = pdf.AddPage();
         pagina.Size = PageSize.A4;
-
         using var gfx = XGraphics.FromPdfPage(pagina);
 
         var fonteTitulo = new XFont("Arial", 20, XFontStyleEx.Bold);
         var fonteNormal = new XFont("Arial", 12, XFontStyleEx.Regular);
-        var fontePequena = new XFont("Arial", 10, XFontStyleEx.Regular);
 
-        gfx.DrawString(rel.Titulo, fonteTitulo, XBrushes.Black,
-            new XRect(50, 50, pagina.Width.Point - 100, 40), XStringFormats.TopLeft);
-
-        gfx.DrawString($"Autor: {rel.Autor}", fonteNormal, XBrushes.Black, 50, 110);
-        gfx.DrawString($"Data de criação: {rel.DataCriacao:dd/MM/yyyy HH:mm}", fontePequena, XBrushes.Gray, 50, 135);
-
-        DesenharTextoQuebrado(gfx, rel.Conteudo, fonteNormal, XBrushes.Black, 50, 180, pagina.Width.Point - 100, 18);
-    }
-
-    private static void DesenharTextoQuebrado(XGraphics gfx, string texto, XFont fonte, XBrush brush, double x, double y, double larguraMaxima, double alturaLinha)
-    {
-        var palavras = texto.Split(' ');
-        var linha = string.Empty;
-
-        foreach (var palavra in palavras)
-        {
-            var teste = string.IsNullOrEmpty(linha) ? palavra : $"{linha} {palavra}";
-
-            if (gfx.MeasureString(teste, fonte).Width > larguraMaxima)
-            {
-                gfx.DrawString(linha, fonte, brush, x, y);
-                linha = palavra;
-                y += alturaLinha;
-            }
-            else
-            {
-                linha = teste;
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(linha))
-        {
-            gfx.DrawString(linha, fonte, brush, x, y);
-        }
+        gfx.DrawString(rel.Titulo, fonteTitulo, XBrushes.Black, 50, 50);
+        gfx.DrawString($"Autor: {rel.Autor}", fonteNormal, XBrushes.Black, 50, 100);
+        gfx.DrawString(rel.Conteudo, fonteNormal, XBrushes.Black, 50, 150);
     }
 
     private static void ConfigurarFontes()
     {
-        if (_fontesConfiguradas)
-            return;
-
-        if (Capabilities.Build.IsCoreBuild)
-            GlobalFontSettings.UseWindowsFontsUnderWindows = true;
-
+        if (_fontesConfiguradas) return;
+        
+        // Se estivermos em ambiente Linux/Core, injetamos a nossa classe resolvedora
+        if (Capabilities.Build.IsCoreBuild) 
+        {
+            GlobalFontSettings.FontResolver = new LinuxFontResolver();
+        }
+        
         _fontesConfiguradas = true;
     }
 }
 
+// Classe que ensina o PDFsharp a encontrar as fontes no Linux
+public class LinuxFontResolver : IFontResolver
+{
+    public byte[] GetFont(string faceName)
+    {
+        // Vai buscar o ficheiro físico da fonte que instalaste no Passo 1
+        string fontPath = "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
+        
+        if (faceName == "ArialBold") 
+            fontPath = "/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf";
+            
+        if (!File.Exists(fontPath))
+            throw new FileNotFoundException($"Falta instalar a fonte Arial no Linux. Execute o Passo 1 no terminal.");
+            
+        return File.ReadAllBytes(fontPath);
+    }
+
+    public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
+    {
+        return new FontResolverInfo(isBold ? "ArialBold" : "Arial");
+    }
+}
