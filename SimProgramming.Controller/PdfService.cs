@@ -20,11 +20,9 @@ public class PdfService : IPdfService
         if (documento == null) throw new ArgumentNullException(nameof(documento));
         if (string.IsNullOrWhiteSpace(caminhoArquivo)) throw new ArgumentException("Caminho inválido.", nameof(caminhoArquivo));
 
-        var erros = documento.Validar();
-
-        if (erros.Any())
+        if (!documento.Validar())
         {
-            throw new DocumentValidationException(string.Join(" | ", erros));
+            throw new DocumentValidationException("Dados do documento inválidos. Verifique os campos obrigatórios.");
         }
 
         try
