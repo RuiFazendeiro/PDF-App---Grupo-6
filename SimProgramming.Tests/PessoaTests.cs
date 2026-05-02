@@ -14,25 +14,32 @@ public class PessoaTests
     public void Validar_PessoaCompleta_DeveRetornarTrue()
     {
         var pessoa = CriarPessoaValida();
-        Assert.True(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.Empty(erros);
     }
 
     // --- Nome ---
 
     [Fact]
-    public void Validar_SemNome_DeveRetornarFalse()
+    public void Validar_SemNome_DeveRetornarErro()
     {
         var pessoa = CriarPessoaValida();
         pessoa.Nome = "";
-        Assert.False(pessoa.Validar());
+
+        var erros = pessoa.Validar();
+
+        Assert.NotEmpty(erros);
     }
 
     [Fact]
-    public void Validar_NomeMuitoCurto_DeveRetornarFalse()
+    public void Validar_NomeComNumeros_DeveRetornarErroEspecifico()
     {
         var pessoa = CriarPessoaValida();
-        pessoa.Nome = "A";
-        Assert.False(pessoa.Validar());
+        pessoa.Nome = "Andreia123";
+
+        var erros = pessoa.Validar();
+
+        Assert.Contains("O nome não pode conter números.", erros);
     }
 
     [Fact]
@@ -40,7 +47,8 @@ public class PessoaTests
     {
         var pessoa = CriarPessoaValida();
         pessoa.Nome = "Andreia123";
-        Assert.False(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.NotEmpty(erros);
     }
 
     // --- Email ---
@@ -50,7 +58,8 @@ public class PessoaTests
     {
         var pessoa = CriarPessoaValida();
         pessoa.Email = "andreiaemail.com";
-        Assert.False(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.NotEmpty(erros);
     }
 
     [Fact]
@@ -58,7 +67,8 @@ public class PessoaTests
     {
         var pessoa = CriarPessoaValida();
         pessoa.Email = "andreia@";
-        Assert.False(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.NotEmpty(erros);
     }
 
     [Fact]
@@ -66,7 +76,8 @@ public class PessoaTests
     {
         var pessoa = CriarPessoaValida();
         pessoa.Email = "";
-        Assert.False(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.NotEmpty(erros);
     }
 
     [Fact]
@@ -74,6 +85,7 @@ public class PessoaTests
     {
         var pessoa = CriarPessoaValida();
         pessoa.Email = "   ";
-        Assert.False(pessoa.Validar());
+        var erros = pessoa.Validar();
+        Assert.NotEmpty(erros);
     }
 }
