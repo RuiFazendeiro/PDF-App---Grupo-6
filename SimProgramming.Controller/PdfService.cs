@@ -101,17 +101,18 @@ public class PdfService : IPdfService
     }
 
     private static void ConfigurarFontes()
+{
+    if (_fontesConfiguradas) return;
+    
+    // Se NÃO for Windows (ex: Codespaces/Linux)
+    if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) 
     {
-        if (_fontesConfiguradas) return;
-        
-        // Se estivermos em ambiente Linux/Core, injetamos a nossa classe resolvedora
-        if (Capabilities.Build.IsCoreBuild) 
-        {
-            GlobalFontSettings.FontResolver = new LinuxFontResolver();
-        }
-        
-        _fontesConfiguradas = true;
+        GlobalFontSettings.FontResolver = new LinuxFontResolver();
     }
+    // Se for Windows, o PDFsharp usa as fontes do sistema automaticamente
+    
+    _fontesConfiguradas = true;
+}
 }
 
 // Classe que ensina o PDFsharp a encontrar as fontes no Linux
