@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System;
+using System.Runtime.InteropServices;
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
@@ -101,39 +102,51 @@ public class PdfService : IPdfService
     }
 
     private static void ConfigurarFontes()
-{
-    if (_fontesConfiguradas) return;
-    
-    // Se NÃO for Windows (ex: Codespaces/Linux)
-    if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) 
     {
-        GlobalFontSettings.FontResolver = new LinuxFontResolver();
+        if (_fontesConfiguradas) return;
+        
+        // Agora aplicamos sempre o resolver, independentemente do OS
+        if (GlobalFontSettings.FontResolver == null)
+        {
+            GlobalFontSettings.FontResolver = new UniversalFontResolver();
+        }
+        
+        _fontesConfiguradas = true;
     }
-    // Se for Windows, o PDFsharp usa as fontes do sistema automaticamente
-    
-    _fontesConfiguradas = true;
-}
 }
 
-// Classe que ensina o PDFsharp a encontrar as fontes no Linux
-public class LinuxFontResolver : IFontResolver
+// Classe Universal que sabe encontrar a fonte Arial tanto no Windows como no Linux
+public class UniversalFontResolver : IFontResolver
 {
     public byte[] GetFont(string faceName)
     {
-        // Vai buscar o ficheiro físico da fonte que instalaste no Passo 1
-        string fontPath = "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
-        
-        if (faceName == "ArialBold") 
-            fontPath = "/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf";
-            
+        bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        string fontPath = string.Empty;
+
+        if (isWindows)
+        {
+            // Caminho nativo das fontes no Windows
+            fontPath = faceName == "ArialBold" 
+                ? @"C:\Windows\Fonts\arialbd.ttf" 
+                : @"C:\Windows\Fonts\arial.ttf";
+        }
+        else
+        {
+            // Caminho das fontes no Linux / Codespaces
+            fontPath = faceName == "ArialBold" 
+                ? "/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf" 
+                : "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
+        }
+
         if (!File.Exists(fontPath))
-            throw new FileNotFoundException($"Falta instalar a fonte Arial no Linux. Execute o Passo 1 no terminal.");
+            throw new FileNotFoundException($"A fonte não foi encontrada no caminho: {fontPath}. Se estiver no Linux, instale as fontes msttcorefonts.");
             
         return File.ReadAllBytes(fontPath);
     }
 
     public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
     {
+        // Forçamos o mapeamento apenas para a Arial (normal ou negrito)
         return new FontResolverInfo(isBold ? "ArialBold" : "Arial");
     }
 }
