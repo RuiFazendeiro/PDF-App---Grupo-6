@@ -31,5 +31,7 @@ Para manter a organização, o código deve ser estruturado nas seguintes pastas
 3. Abrir um **Pull Request** para revisão do Verificador antes do merge.
 4. Garantir que o ficheiro `.gitignore` está ativo para evitar ficheiros temporários (`bin/obj`).
 
+Para uma análise detalhada da gestão de APIs externas, consulte o DEPENDENCIAS.md
+
 ---
 *Este projeto foi desenvolvido no âmbito da SimProgramming 2026.*
