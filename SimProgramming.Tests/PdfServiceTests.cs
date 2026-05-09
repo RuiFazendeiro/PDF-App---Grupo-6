@@ -7,14 +7,12 @@ using SimProgramming.Model;
 
 namespace SimProgramming.Tests
 {
-    public class PdfServiceTests : IDisposable
+    public class PdfServiceTests
     {
-        private readonly string _tempFile;
         private readonly PdfService _service;
 
         public PdfServiceTests()
         {
-            _tempFile = Path.Combine(Path.GetTempPath(), $"test_doc_{Guid.NewGuid()}.pdf");
             _service = new PdfService();
         }
 
@@ -31,11 +29,10 @@ namespace SimProgramming.Tests
                 DataEmissao = DateTime.Now
             };
 
-            _service.GerarDocumento(cert, _tempFile);
+            using var memoryStream = new MemoryStream();
+            _service.GerarDocumento(cert, memoryStream);
 
-            Assert.True(File.Exists(_tempFile));
-            Assert.True(File.Exists(_tempFile));
-            Assert.True(new FileInfo(_tempFile).Length > 0);
+            Assert.True(memoryStream.Length > 0);
         }
 
         [Fact]
@@ -51,12 +48,54 @@ namespace SimProgramming.Tests
                 DataEmissao = default
             };
 
-            Assert.Throws<DocumentValidationException>(() => _service.GerarDocumento(cert, _tempFile));
+            using var memoryStream = new MemoryStream();
+            Assert.Throws<DocumentValidationException>(() => _service.GerarDocumento(cert, memoryStream));
         }
 
-        public void Dispose()
+        [Fact]
+        public void GerarDocumento_ValidRelatorio_CreatesFile()
         {
-            try { if (File.Exists(_tempFile)) File.Delete(_tempFile); } catch { }
+            var relatorio = new Relatorio
+            {
+                Titulo = "Relatório de Testes",
+                DataCriacao = DateTime.Now.AddHours(-2),
+                Autor = "Andreia Correia",
+                Conteudo = "Este é um conteúdo de teste para o relatório com mais de 10 caracteres."
+            };
+
+            using var memoryStream = new MemoryStream();
+            _service.GerarDocumento(relatorio, memoryStream);
+
+            Assert.True(memoryStream.Length > 0);
+        }
+
+        [Fact]
+        public void GerarDocumento_ValidCertificado_WithFileStream_CreatesFile()
+        {
+            var cert = new Certificado
+            {
+                Titulo = "Certificado Teste",
+                DataCriacao = DateTime.Now.AddDays(-1),
+                NomeFormando = "Maria Santos",
+                Curso = "Python Avançado",
+                EntidadeEmissora = "SimProgramming",
+                DataEmissao = DateTime.Now
+            };
+
+            // Teste com FileStream para garantir compatibilidade
+            string tempFile = Path.Combine(Path.GetTempPath(), $"test_cert_{Guid.NewGuid()}.pdf");
+            try
+            {
+                _service.GerarDocumento(cert, tempFile);
+                Assert.True(File.Exists(tempFile));
+                Assert.True(new FileInfo(tempFile).Length > 0);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                    File.Delete(tempFile);
+            }
         }
     }
 }
+

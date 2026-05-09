@@ -20,6 +20,22 @@ public class PdfService : IPdfService
         if (documento == null) throw new ArgumentNullException(nameof(documento));
         if (string.IsNullOrWhiteSpace(caminhoArquivo)) throw new ArgumentException("Caminho inválido.", nameof(caminhoArquivo));
 
+        try
+        {
+            using var fileStream = new FileStream(caminhoArquivo, FileMode.Create, FileAccess.Write);
+            GerarDocumento(documento, fileStream);
+        }
+        catch (IOException ex)
+        {
+            throw new PdfGenerationException("Falha ao gravar o ficheiro PDF. Pode estar aberto noutro programa.", ex);
+        }
+    }
+
+    public void GerarDocumento(DocumentoBase documento, Stream stream)
+    {
+        if (documento == null) throw new ArgumentNullException(nameof(documento));
+        if (stream == null) throw new ArgumentNullException(nameof(stream));
+
         var erros = documento.Validar();
 
         if (erros.Any())
@@ -48,16 +64,31 @@ public class PdfService : IPdfService
                 throw new PdfGenerationException("Tipo de documento não suportado pelo serviço.");
             }
 
-            pdf.Save(caminhoArquivo);
+            pdf.Save(stream);
         }
-        catch (IOException ex)
-        {
-            throw new PdfGenerationException("Falha ao gravar o ficheiro PDF. Pode estar aberto noutro programa.", ex);
-        }
-        catch (Exception ex) when (ex is not PdfGenerationException)
+        catch (Exception ex) when (ex is not PdfGenerationException && ex is not DocumentValidationException)
         {
             throw new PdfGenerationException("Erro inesperado ao gerar o PDF.", ex);
         }
+    }
+
+    private static void DesenharRodapeCertificado(XGraphics gfx, PdfPage pagina, Certificado cert)
+    {
+        var fontePequena = new XFont("Arial", 9, XFontStyleEx.Regular);
+
+        // Número de série (gerado a partir de hash do documento)
+        string numeroSerie = $"CERT-{DateTime.Now:yyyyMMdd}-{cert.NomeFormando.GetHashCode() % 10000:D4}";
+        gfx.DrawString($"Número de série: {numeroSerie}", fontePequena, XBrushes.Gray, 50, pagina.Height.Point - 20);
+    }
+
+    private static void DesenharCabecalhoCertificado(XGraphics gfx, PdfPage pagina)
+    {
+        var azul = XColor.FromArgb(35, 75, 145);
+        var fontePequena = new XFont("Arial", 10, XFontStyleEx.Regular);
+
+        // Cabeçalho com branding SimProgramming
+        gfx.DrawString("SimProgramming - Equipa 6", fontePequena, new XSolidBrush(azul), 50, 10);
+        gfx.DrawString($"Emitido em: {DateTime.Now:dd/MM/yyyy}", fontePequena, XBrushes.Gray, pagina.Width.Point - 200, 10);
     }
 
     private static void GerarCertificado(PdfDocument pdf, Certificado cert)
@@ -71,6 +102,9 @@ public class PdfService : IPdfService
         var fonteNome = new XFont("Arial", 22, XFontStyleEx.Bold);
         var fonteNormal = new XFont("Arial", 12, XFontStyleEx.Regular);
 
+        // Desenhar cabeçalho
+        DesenharCabecalhoCertificado(gfx, pagina);
+
         // Moldura
         gfx.DrawRectangle(new XPen(azul, 2), 40, 40, pagina.Width.Point - 80, pagina.Height.Point - 80);
 
@@ -79,14 +113,36 @@ public class PdfService : IPdfService
         gfx.DrawString("Certifica-se que", fonteNormal, XBrushes.Black, new XRect(0, 180, pagina.Width.Point, 30), XStringFormats.Center);
         gfx.DrawString(cert.NomeFormando, fonteNome, new XSolidBrush(azul), new XRect(0, 230, pagina.Width.Point, 40), XStringFormats.Center);
         gfx.DrawString($"concluiu com sucesso o curso de {cert.Curso}.", fonteNormal, XBrushes.Black, new XRect(0, 300, pagina.Width.Point, 40), XStringFormats.Center);
-        
+
         // Rodapé fiel ao PR do Frederico
         gfx.DrawString($"Entidade emissora: {cert.EntidadeEmissora}", fonteNormal, XBrushes.Black, 70, 630);
         gfx.DrawString($"Data de emissão: {cert.DataEmissao:dd/MM/yyyy}", fonteNormal, XBrushes.Black, 70, 650);
-        
+
         // Linha de assinatura
         gfx.DrawLine(new XPen(azul, 1), pagina.Width.Point - 240, 700, pagina.Width.Point - 70, 700);
         gfx.DrawString("Assinatura", fonteNormal, XBrushes.Black, pagina.Width.Point - 185, 720);
+
+        // Desenhar rodapé padronizado
+        DesenharRodapeCertificado(gfx, pagina, cert);
+    }
+
+    private static void DesenharRodapeRelatorio(XGraphics gfx, PdfPage pagina, Relatorio rel, int numeroPagina, int totalPaginas)
+    {
+        var fontePequena = new XFont("Arial", 9, XFontStyleEx.Regular);
+
+        // Informações do rodapé
+        gfx.DrawString($"Autor: {rel.Autor}", fontePequena, XBrushes.Gray, 50, pagina.Height.Point - 15);
+        gfx.DrawString($"Página {numeroPagina} de {totalPaginas}", fontePequena, XBrushes.Gray, pagina.Width.Point / 2 - 30, pagina.Height.Point - 15);
+    }
+
+    private static void DesenharCabecalhoRelatorio(XGraphics gfx, PdfPage pagina, Relatorio rel)
+    {
+        var azul = XColor.FromArgb(35, 75, 145);
+        var fontePequena = new XFont("Arial", 10, XFontStyleEx.Regular);
+
+        // Cabeçalho com título do documento e data
+        gfx.DrawString($"Relatório: {rel.Titulo}", fontePequena, new XSolidBrush(azul), 50, 15);
+        gfx.DrawString($"Data: {rel.DataCriacao:dd/MM/yyyy}", fontePequena, XBrushes.Gray, pagina.Width.Point - 150, 15);
     }
 
     private static void GerarRelatorio(PdfDocument pdf, Relatorio rel)
@@ -98,9 +154,16 @@ public class PdfService : IPdfService
         var fonteTitulo = new XFont("Arial", 20, XFontStyleEx.Bold);
         var fonteNormal = new XFont("Arial", 12, XFontStyleEx.Regular);
 
-        gfx.DrawString(rel.Titulo, fonteTitulo, XBrushes.Black, 50, 50);
+        // Desenhar cabeçalho
+        DesenharCabecalhoRelatorio(gfx, pagina, rel);
+
+        // Conteúdo principal com margens respeitando cabeçalho e rodapé
+        gfx.DrawString(rel.Titulo, fonteTitulo, XBrushes.Black, 50, 55);
         gfx.DrawString($"Autor: {rel.Autor}", fonteNormal, XBrushes.Black, 50, 100);
         gfx.DrawString(rel.Conteudo, fonteNormal, XBrushes.Black, 50, 150);
+
+        // Desenhar rodapé padronizado
+        DesenharRodapeRelatorio(gfx, pagina, rel, 1, 1);
     }
 
     private static void ConfigurarFontes()

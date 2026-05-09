@@ -14,4 +14,12 @@ public interface IPdfService
     /// <param name="documento">O objeto (Certificado ou Relatório) a processar.</param>
     /// <param name="caminhoArquivo">O destino no sistema de ficheiros.</param>
     void GerarDocumento(DocumentoBase documento, string caminhoArquivo);
+
+    /// <summary>
+    /// Transpõe um modelo de dados para um Stream PDF.
+    /// Permite maior flexibilidade, libertando o serviço da dependência de caminhos físicos.
+    /// </summary>
+    /// <param name="documento">O objeto (Certificado ou Relatório) a processar.</param>
+    /// <param name="stream">O stream onde o PDF será escrito.</param>
+    void GerarDocumento(DocumentoBase documento, Stream stream);
 }
