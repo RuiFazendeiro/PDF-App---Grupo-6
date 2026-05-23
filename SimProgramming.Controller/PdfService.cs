@@ -25,9 +25,33 @@ public class PdfService : IPdfService
             using var fileStream = new FileStream(caminhoArquivo, FileMode.Create, FileAccess.Write);
             GerarDocumento(documento, fileStream);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new PdfGenerationException($"Permissão negada ao gravar o ficheiro PDF em '{caminhoArquivo}'. Verifique as permissões de escrita no diretório.", ex);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            throw new PdfGenerationException($"O diretório especificado não existe: '{Path.GetDirectoryName(caminhoArquivo)}'. Crie o diretório antes de tentar gerar o PDF.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new PdfGenerationException($"O caminho do ficheiro não é suportado: '{caminhoArquivo}'. Verifique o formato do caminho.", ex);
+        }
         catch (IOException ex)
         {
-            throw new PdfGenerationException("Falha ao gravar o ficheiro PDF. Pode estar aberto noutro programa.", ex);
+            // Captura erros como disco cheio, ficheiro em uso por outro programa, etc.
+            string mensagem = "Falha ao gravar o ficheiro PDF.";
+            if (ex.Message.Contains("disco"))
+                mensagem += " Possível falta de espaço em disco.";
+            else if (ex.Message.Contains("use"))
+                mensagem += " O ficheiro pode estar aberto noutro programa.";
+            else
+                mensagem += " Verifique se o caminho é válido e se tem permissão de escrita.";
+            throw new PdfGenerationException(mensagem, ex);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new PdfGenerationException($"Caminho do ficheiro inválido: '{caminhoArquivo}'.", ex);
         }
     }
 
@@ -65,6 +89,18 @@ public class PdfService : IPdfService
             }
 
             pdf.Save(stream);
+        }
+        catch (OutOfMemoryException ex)
+        {
+            throw new PdfGenerationException("Memória insuficiente para gerar o PDF. A estrutura do documento pode ser demasiado complexa ou grande.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new PdfGenerationException("Operação não suportada ao gerar o PDF. Verifique o formato do stream ou tipo de documento.", ex);
+        }
+        catch (IOException ex)
+        {
+            throw new PdfGenerationException("Erro de I/O ao gravar o PDF. Verifique se o stream é gravável e se há espaço disponível.", ex);
         }
         catch (Exception ex) when (ex is not PdfGenerationException && ex is not DocumentValidationException)
         {
@@ -203,10 +239,33 @@ public class UniversalFontResolver : IFontResolver
                 : "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
         }
 
-        if (!File.Exists(fontPath))
-            throw new FileNotFoundException($"A fonte não foi encontrada no caminho: {fontPath}. Se estiver no Linux, instale as fontes msttcorefonts.");
-            
-        return File.ReadAllBytes(fontPath);
+        try
+        {
+            if (!File.Exists(fontPath))
+                throw new FileNotFoundException($"A fonte não foi encontrada no caminho: {fontPath}. Se estiver no Linux, instale as fontes msttcorefonts.");
+
+            return File.ReadAllBytes(fontPath);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new PdfGenerationException($"Permissão negada ao aceder à fonte em '{fontPath}'. Verifique as permissões de leitura.", ex);
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new PdfGenerationException(ex.Message, ex);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            throw new PdfGenerationException($"O diretório das fontes não existe: '{Path.GetDirectoryName(fontPath)}'.", ex);
+        }
+        catch (IOException ex)
+        {
+            throw new PdfGenerationException($"Erro ao ler o ficheiro de fonte: '{fontPath}'. O ficheiro pode estar corrompido ou em uso.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new PdfGenerationException($"Caminho de fonte não suportado: '{fontPath}'.", ex);
+        }
     }
 
     public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
