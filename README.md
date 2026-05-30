@@ -137,68 +137,6 @@ A `ConsoleView` é a camada de apresentação da aplicação que fornece uma int
 - **Entrada de Dados**: Recolher informações do utilizador com prompts personalizados
 - **Feedback Visual**: Indicar sucesso ou erro de operações com prefixos visuais
 
-## 🔄 Modos de Operação
-
-A aplicação pode ser executada em dois modos distintos, configuráveis no ficheiro `Program.cs`:
-
-### Modo 1: Experimental (Com MockPdfService)
-**Estado Atual:** ACTIVADO (predefinido)
-
-**Características:**
-- Não gera ficheiros PDF reais
-- Simula o fluxo de geração com eventos reativos
-- Ideal para testes e apresentações (páginas 159-161 da documentação)
-- Menos dependências de sistema
-
-**Código de Ativação:**
-```csharp
-IPdfService mockService = new MockPdfService();
-
-// Subscreve ao evento de forma reativa (Acoplamento)
-((MockPdfService)mockService).AoProcessar += (titulo) => {
-    Console.WriteLine($"[Evento Reativo] O sistema intercetou a geração de: {titulo}");
-};
-
-MainController controllerExperimental = new MainController(view, mockService);
-controllerExperimental.Iniciar();
-```
-
-**Exemplo de Output:**
-```
-[Evento Reativo] O sistema intercetou a geração de: Certificado de Formação
-```
-
-### Modo 2: Produção (Com PdfService Real)
-**Estado Atual:** COMENTADO (descomentar para ativar)
-
-**Características:**
-- Gera ficheiros PDF reais usando a biblioteca PDFsharp
-- Inclui validação completa de dados
-- Tratamento robusto de erros (disco cheio, permissões, caminhos)
-- Inclui metadados nos PDFs (título, autor)
-
-**Código de Ativação:**
-```csharp
-IPdfService pdfService = new PdfService();
-MainController controllerReal = new MainController(view, pdfService);
-controllerReal.Iniciar();
-```
-
-**Como Alternar Entre Modos:**
-1. Abra `SimProgramming.View/Program.cs`
-2. Comente o bloco `MODO 1: CASO EXPERIMENTAL`
-3. Descomente o bloco `MODO 2: PRODUÇÃO REAL`
-4. Execute novamente: `dotnet run --project SimProgramming.View/SimProgramming.View.csproj`
-
-### ConsoleView - Interface de Utilizador
-
-A `ConsoleView` é a camada de apresentação da aplicação que fornece uma interface de consola amigável para interagir com o sistema. Esta classe implementa a interface `IView` e oferece métodos para:
-
-- **Exibição de Mensagens**: Apresentar informações estruturadas ao utilizador
-- **Menus Interativos**: Guiar o utilizador através de opções numeradas
-- **Entrada de Dados**: Recolher informações do utilizador com prompts personalizados
-- **Feedback Visual**: Indicar sucesso ou erro de operações com prefixos visuais
-
 #### Métodos Principais
 
 | Método | Descrição | Utilização |
@@ -672,8 +610,6 @@ dotnet test SimProgramming.Tests/SimProgramming.Tests.csproj
 2. Criar uma branch própria para cada tarefa: `feature/nome-da-tarefa`.
 3. Abrir um **Pull Request** para revisão do Verificador antes do merge.
 4. Garantir que o ficheiro `.gitignore` está ativo para evitar ficheiros temporários (`bin/obj`).
-
-Para uma análise detalhada da gestão de APIs externas, consulte o DEPENDENCIAS.md
 
 ```
 PDF-App---Grupo-6/
