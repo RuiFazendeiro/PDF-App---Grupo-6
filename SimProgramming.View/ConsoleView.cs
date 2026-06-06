@@ -22,26 +22,35 @@ public class ConsoleView : IView
 
     public void MostrarSucesso(string mensagem)
     {
-        Console.WriteLine("[SUCESSO] " + mensagem);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"[SUCESSO] {mensagem}");
+        Console.ResetColor();
     }
 
     public void MostrarErro(string mensagem)
     {
-        Console.WriteLine("[ERRO] " + mensagem);
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"[ERRO] {mensagem}");
+        Console.ResetColor();
     }
 
-    public void MostrarMenu(string titulo, List<string> opcoes)
+    public void MostrarAviso(string mensagem)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"[AVISO] {mensagem}");
+        Console.ResetColor();
+    }
+
+    public void MostrarMenu()
     {
         Console.WriteLine("========================================");
-        Console.WriteLine(titulo);
+        Console.WriteLine("Menu");
         Console.WriteLine("========================================");
         Console.WriteLine();
 
-        for (int i = 0; i < opcoes.Count; i++)
-        {
-            Console.WriteLine($"{i + 1}. {opcoes[i]}");
-        }
-
+        Console.WriteLine("1. Gerar Certificado");
+        Console.WriteLine("2. Ajuda");
+        Console.WriteLine("0. Sair");
         Console.WriteLine();
         Console.Write("Escolha uma opção: ");
     }
@@ -53,7 +62,7 @@ public class ConsoleView : IView
     public string LerInput(string prompt)
     {
         Console.Write(prompt);
-        return Console.ReadLine();
+        return Console.ReadLine() ?? string.Empty;
     }
 
     #endregion
