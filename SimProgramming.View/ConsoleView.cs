@@ -41,16 +41,18 @@ public class ConsoleView : IView
         Console.ResetColor();
     }
 
-    public void MostrarMenu()
+    public void MostrarMenu(string titulo, List<string> opcoes)
     {
         Console.WriteLine("========================================");
-        Console.WriteLine("Menu");
+        Console.WriteLine(titulo);
         Console.WriteLine("========================================");
         Console.WriteLine();
 
-        Console.WriteLine("1. Gerar Certificado");
-        Console.WriteLine("2. Ajuda");
-        Console.WriteLine("0. Sair");
+        for (int i = 0; i < opcoes.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {opcoes[i]}");
+        }
+
         Console.WriteLine();
         Console.Write("Escolha uma opção: ");
     }

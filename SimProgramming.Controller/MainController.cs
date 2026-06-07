@@ -8,14 +8,14 @@ using SimProgramming.Controller.Exceptions;
 
 namespace SimProgramming.Controller;
 
-public class MainController
+// Herda do BaseController para reutilizar validações e lógica comum
+public class MainController : BaseController
 {
-    private readonly IView _view;
     private readonly IPdfService _pdfService;
 
     public MainController(IView view, IPdfService pdfService)
+        : base(view)
     {
-        _view = view;
         _pdfService = pdfService;
     }
 
@@ -23,6 +23,7 @@ public class MainController
     {
         _view.LimparConsola();
         _view.ExibirMensagem("=== SimProgramming: Gerador de Documentos ===");
+
         try
         {
             // 1. Captura de dados (View Passiva)
@@ -49,6 +50,7 @@ public class MainController
                 {
                     _view.ExibirMensagem($"Erro: {erro}");
                 }
+
                 return;
             }
 
@@ -59,25 +61,32 @@ public class MainController
 
             _view.ExibirMensagem("Operação concluída. Verifique o ficheiro gerado.");
         }
+
         // --- BLOCOS CATCH ATUALIZADOS AQUI ---
+
         catch (DocumentValidationException dex)
         {
             _view.ExibirMensagem($"\n[Aviso] {dex.Message}");
         }
+
         catch (PdfGenerationException pex)
         {
             _view.ExibirMensagem($"\n[Falha ao Gravar] {pex.Message}");
-            
+
             // 👇 Esta é a linha que vai revelar o erro de fonte do Linux!
             if (pex.InnerException != null)
             {
-                _view.ExibirMensagem($"[Detalhe Técnico do Linux] {pex.InnerException.Message}");
+                _view.ExibirMensagem(
+                    $"[Detalhe Técnico do Linux] {pex.InnerException.Message}");
             }
         }
+
         catch (ArgumentException aex)
         {
-            _view.ExibirMensagem($"\n[Erro Interno] Parâmetro inválido: {aex.Message}");
+            _view.ExibirMensagem(
+                $"\n[Erro Interno] Parâmetro inválido: {aex.Message}");
         }
+
         catch (Exception ex)
         {
             _view.ExibirMensagem($"\n[Erro Crítico] {ex.Message}");
