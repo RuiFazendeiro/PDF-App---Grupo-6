@@ -22,12 +22,23 @@ public class ConsoleView : IView
 
     public void MostrarSucesso(string mensagem)
     {
-        Console.WriteLine("[SUCESSO] " + mensagem);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"[SUCESSO] {mensagem}");
+        Console.ResetColor();
     }
 
     public void MostrarErro(string mensagem)
     {
-        Console.WriteLine("[ERRO] " + mensagem);
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"[ERRO] {mensagem}");
+        Console.ResetColor();
+    }
+
+    public void MostrarAviso(string mensagem)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"[AVISO] {mensagem}");
+        Console.ResetColor();
     }
 
     public void MostrarMenu(string titulo, List<string> opcoes)
@@ -53,7 +64,7 @@ public class ConsoleView : IView
     public string LerInput(string prompt)
     {
         Console.Write(prompt);
-        return Console.ReadLine();
+        return Console.ReadLine() ?? string.Empty;
     }
 
     #endregion
